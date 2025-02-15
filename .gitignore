@@ -1,0 +1,9 @@
+# Private keys
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/ 
