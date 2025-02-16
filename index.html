@@ -3,159 +3,111 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
   <title>Pass the Pass: Secure Message Exchange</title>
-  <link rel="stylesheet" href="app.css">
+  <link href="dist/styles.css" rel="stylesheet">
 </head>
 
-<body>
+<body class="font-sans text-gray-800 h-screen overflow-hidden">
   <!-- Landing Page -->
-  <div class="landing" id="landing">
-    <div class="split" id="encrypt-landing">
-      <h2>I want to send&nbsp;text</h2>
+  <div class="flex flex-col md:flex-row h-screen bg-gray-100 gap-0.5" id="landing">
+    <div class="flex-1 flex items-center justify-center transition-all duration-300 cursor-pointer bg-white shadow-sm hover:flex-[1.2] hover:bg-gray-50 hover:shadow-md" id="encrypt-landing">
+      <h2 class="text-4xl text-gray-800 text-center p-5 relative after:content-[''] after:absolute after:-bottom-2.5 after:left-1/2 after:-translate-x-1/2 after:w-12 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-24">I want to send&nbsp;text</h2>
     </div>
-    <div class="split" id="decrypt-landing">
-      <h2>I want to read encrypted&nbsp;text</h2>
+    <div class="flex-1 flex items-center justify-center transition-all duration-300 cursor-pointer bg-white shadow-sm hover:flex-[1.2] hover:bg-gray-50 hover:shadow-md" id="decrypt-landing">
+      <h2 class="text-4xl text-gray-800 text-center p-5 relative after:content-[''] after:absolute after:-bottom-2.5 after:left-1/2 after:-translate-x-1/2 after:w-12 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-24">I want to read encrypted&nbsp;text</h2>
     </div>
   </div>
 
   <!-- Encrypt Workspace -->
-  <div class="workspace" id="encrypt-workspace">
-    <h1>Encrypt Message</h1>
-    <div class="textarea-container">
-      <textarea id="encrypt-input" placeholder="Type your message here..."></textarea>
-      <button class="copy-button" id="copy-encrypt-input">Copy</button>
+  <div class="hidden h-screen p-8 bg-white" id="encrypt-workspace">
+    <h1 class="text-2xl font-semibold">Encrypt Message</h1>
+    <div class="flex items-center gap-4 mt-4">
+      <label for="key-lookup-input" class="text-xl">To:</label>
+      <div class="flex-1">
+        <input type="text" id="key-lookup-input" class="w-full p-2 font-mono border border-gray-300 rounded" placeholder="Enter fingerprint or email address">
+      </div>
+      <button class="bg-primary text-white px-6 py-2 rounded text-base cursor-pointer transition-colors duration-300 hover:bg-primary-dark" id="encrypt-button">Encrypt</button>
     </div>
-    <button class="button" id="show-public-key">Configure Public Key</button>
-    <button class="button" id="encrypt-button">Encrypt Message</button>
+    <div class="relative h-[calc(100vh-200px)] mt-5">
+      <textarea id="encrypt-input" class="peer w-full h-full p-4 font-mono border-2 border-gray-300 rounded-lg resize-none" placeholder="Type your message here..."></textarea>
+      <button class="absolute top-2.5 right-2.5 w-20 px-2.5 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 active:bg-gray-100 transition-all duration-200 opacity-0 peer-focus:opacity-100 hover:opacity-100" id="copy-encrypt-input">Copy</button>
+      <button class="absolute bottom-4 right-4 w-14 h-14 p-3 bg-white border border-gray-300 rounded-full cursor-pointer text-3xl flex items-center justify-center transition-all duration-200 hover:bg-gray-50 hover:border-primary hover:rotate-[30deg] z-10" id="show-public-key" title="Configure Public Key">⚙️</button>
+    </div>
   </div>
 
   <!-- Decrypt Workspace -->
-  <div class="workspace" id="decrypt-workspace">
-    <h1>Decrypt Message</h1>
-    <div class="textarea-container">
-      <textarea id="decrypt-input" placeholder="Paste encrypted message here..."></textarea>
-      <button class="copy-button" id="copy-decrypt-input">Copy</button>
+  <div class="hidden h-screen p-8 bg-white" id="decrypt-workspace">
+    <h1 class="text-2xl font-semibold">Decrypt Message</h1>
+    <div class="relative h-[calc(100vh-200px)] mt-5 mb-5">
+      <textarea id="decrypt-input" class="peer w-full h-full p-4 font-mono border-2 border-gray-300 rounded-lg resize-none" placeholder="Paste encrypted message here..."></textarea>
+      <button class="absolute top-2.5 right-2.5 w-20 px-2.5 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 active:bg-gray-100 transition-all duration-200 opacity-0 peer-focus:opacity-100 hover:opacity-100" id="copy-decrypt-input">Copy</button>
+      <button class="absolute bottom-4 right-4 w-14 h-14 p-3 bg-white border border-gray-300 rounded-full cursor-pointer text-3xl flex items-center justify-center transition-all duration-200 hover:bg-gray-50 hover:border-primary hover:rotate-[30deg] z-10" id="show-private-key" title="Configure Private Key">⚙️</button>
     </div>
-    <button class="button" id="show-private-key">Configure Private Key</button>
-    <button class="button" id="decrypt-button">Decrypt Message</button>
+    <button class="bg-primary text-white px-6 py-3 rounded text-base cursor-pointer transition-colors duration-300 hover:bg-primary-dark" id="decrypt-button">Decrypt Message</button>
   </div>
 
   <!-- Public Key Modal -->
-  <div class="modal" id="public-key-modal">
-    <div class="modal-content">
-      <button class="close-button" id="close-public-key">&times;</button>
-      <h2>Configure Public Key</h2>
+  <div class="hidden fixed inset-0 bg-black/50 items-center justify-center" id="public-key-modal">
+    <div class="bg-white p-8 rounded-lg w-[90%] max-w-[600px] relative">
+      <button class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-2xl cursor-pointer text-gray-600 rounded-full bg-gray-100 hover:bg-gray-200 hover:text-gray-800 transition-all duration-200" id="close-public-key">&times;</button>
+      <h2 class="text-xl font-semibold mb-4">
+        Configure Public Key
 
-      <div class="field-group">
-        <div class="field-label">
-          <span>Paste your PGP key</span>
-          <span class="info-icon" data-tooltip="The public key of the recipient who will decrypt your message">ⓘ</span>
-        </div>
-        <div class="textarea-container" style="height: 300px;">
-          <textarea id="public-key" class="monospace-input" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----
+        <span class="text-gray-600 text-lg cursor-help relative group" data-tooltip="The public key of the recipient who will decrypt your message">ⓘ
+          <span class="hidden group-hover:block absolute left-6 top-1/2 -translate-y-1/2 bg-gray-800 text-white px-4 py-2 rounded text-sm font-normal whitespace-nowrap z-50">The public key of the recipient who will decrypt your message</span>
+        </span>
+      </h2>
+
+      <div class="mb-4">
+        <div class="relative h-[300px]">
+          <textarea id="public-key" class="w-full h-full p-4 font-mono border border-gray-300 rounded" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 [Their public key would go here]
------END PGP PUBLIC KEY BLOCK-----">-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-mQINBGewtY0BEAD0oYPof5xSw14jIldH2gWbILN6Mx9rLs1rjuepKemihTqBLlou
-T0ZGR4427g0XlHZj/wFauPPzHbrsusuJdzxj4lQZ39eGmLqc5EC/ZDrFfNOfL8fU
-HRvHLNe99wLuMi2aNcei3qZzmVyZo980XubH7xpmrimFU3CTOhfO4mO0FNKHFSXj
-GAr/V2Ix6138xc5sFIDrijKJTwjRYstpo5C1JXmZRTMPkXAw0xEWHCRBh0dCVCTI
-344cArEZVfW+va265DHyrVlMN/ahyKt4UYiCvTBjveSSItp91hr7eB8z/pWfJi2C
-ArJ6s1RQ2nffDsHBbg6iq8jnAn0SmzCe1nwqZmiqFlYXlmj6vLFBr3Vhm/TkYU0p
-WqOo7u/8H+UfZqZ00+82LWmCeQEG6z9vk24bickw78/T49n6jJwg3thrinf+I73f
-h99SIr8p+J7/8I0HtEOQ8+MmiZrTTnew6Cjp1I7A+dVeZsog1oam516x939mhpfZ
-bTt2iYQoZKW9tQaqn9MEzkkscuorvbtDndjeh2nH+O3+nRQZUoYX/gCQyQ0UWDN6
-rM4Cbgr/jcbQLT0aGQcPpFe7gceTgbJgcZzLteLBytNY+Nqi4mLORWRTjOu4WFpY
-QQBJ5Jyj1C5C45rELeigmXX2oB8NK6wNepc1FHuoud/h6n/nf51X1H9hwwARAQAB
-tCtBbGljZSAoTWFpbGJveCBmb3IgQm9iKSA8YWxpY2VAZXhhbXBsZS5jb20+iQJR
-BBMBCAA7FiEEg04BkiZx+olyWBSgn/sgezlfo2IFAmewtY0CGwMFCwkIBwICIgIG
-FQoJCAsCBBYCAwECHgcCF4AACgkQn/sgezlfo2LWbg/+JQYAYnipUCoH8T2hMkRg
-uHESzfwHcxaHa5YVO9y2Cqb1UHwhwfkJIY3w8j+n3i7LyyIaRCQCsFu6wad7kQcK
-wxfa2eaHqHtoNV9M3XT6BzgOWMJQxNodKyMxkXAr/gQk0pn71rAOO3nd/x+7S7aZ
-rXOmC3+AstfrrGWKDAzfn4WQlrrFuS3Jf42ds3dZptIZyn7UxNQNJnk4q48WqwH9
-IWQqFUrBI5bxOw+xbbNu/Gey9knwJ9kQZRyauTKIGjA41viM9004Ixq8KgqvyeS3
-r0X1H57qazeIDWPa0NxkIhfuADcCUBj4c3KyUtQg0N6qN1PajLxbny4YDNHJWVeX
-df3PU69PB/s9ZkIpl095PO1gHS1kTddNNBJXFEuCTf1cF/5xVpyF6oRVIz8J7hqt
-w/fDS2wGMIWctx+KDXsd1ESaDPpuSN8jkkOksuMtm05AZegCkP/zUiC5SBm2KDMr
-MBEkmyWBeqpK+AMP6KZsZFU4n2X82M+rUIl/i+MVCfT1BXeKQRdvPJYDmV7AnM7p
-KnFZWBFCyOHkiiPVdQOH+L/qAx3a+OORDKFotDf8qUuUQKsaIOzxmZ5QqAQBQ/Zy
-5pdFdo+tm0i6JaQ1hhUFZowldL8t3jZor6lxsXtZhhTzSK4Ew4yARG8M1veV0GR2
-Nn70cJX/a4Q5T64BVsexuFW5Ag0EZ7C1jQEQAJXfBGcuVYwEDBy2LE3BoQwYSCZA
-6e3cy3vyyZ8unsMW13UWmQ5MkCZ7z3p+1jrJuyOU5a4rNRlqtYWiVZqTn3d5dpWQ
-wOPvY5LzSvLOKw0HCE6Z4fsKYDpyH8uB1N3rpJaGIj5cl2lYtG7Wqp2aedVkhHqc
-R8ogWAf14pftKGsBWgk/F8Rno3V4F1KOwHvOu7S9IDfFK9wcYnQiMYJ72Yrdu2uv
-AB0kcVeyL+0S9HKQbuNqQqnpsIyPS9QNX5yHDpK1C0iwucQLtlzMK9whAjthPp0+
-LvD4TpvY736wQ/jQw05A+uoOCIhYC4tUhw6DlFuqjNVPY/LGTsTn6gIroY2fuXlf
-8at6CQeI5jVsm3oazOGDf+AgIAlU7giGMwB0fxA67ACeQZ0KguXKNHKTEOAxMDc2
-tOEn/zbay7NlXfTWv7jbg5459AzEnByVPe4SvDFQD7298ek6dZHBy0TWjCSMhbhx
-1rxTijmrpZMqgdSWUagGpVcHd3A5oVWYwAbFE44YxxOBRKpiLJYbdHgRl2tLCzTN
-RjFXe06ZfWGrQ44jnvsqhFTJbPb4dF2b0KCJdh1R+VoJxR5avc8D0DsGtQSQsBVD
-wEZf0o9rREEGgjrJe26/JLW0oIGJBLJUmVVAncl3NTd9isS9oOtWk77FxXbWPA24
-sLNgjF5rMjRrth/tABEBAAGJAjYEGAEIACAWIQSDTgGSJnH6iXJYFKCf+yB7OV+j
-YgUCZ7C1jQIbDAAKCRCf+yB7OV+jYvbZD/41t9Y8QOagEaDdVyxZk2IMJ5DndI67
-0XEYp1o9Y1ZQYz7NYuYW3PBqydIMzUsawc9SVIwaLYnIewsCa8lfOVV7igH7NbPv
-HslWIYmWwl866QdwtrTOXLVM6aFez4Imq02RFfRkcwcrBtBmGfN8FEc5r4JdyNpJ
-yfq6Zv8haYPlGpPfNrX0ttQUaswI6NMmJ3SQKs3NWKFLgmemK9EXcCUGz7MHl5gd
-G3Hg2NZOuzlm/l4eTxFbvSGVC1fss08Q7R1QkhxbpO6IYrplg1LLmnlvgk1hqrbO
-yeN8XaK1lFJCIHagTM4h1iy07dABeZiLp4I8LTFz36kijaHV/S67+RlBqU+NZaIJ
-EMhdWzunbrjbNWizaGUZE3HP1tovcgXFX4lN398eC4RnWrTPZpucGwqCwlyCCX+D
-vxeGeFDJwOf3x41CBmarj9dzRA5Cf+Uux8kNm84mXRXu/zHwVYZ9USYcb/ZWouKo
-rDjVKNtyzRpbkwqzkNCe352rP+Mza3uyByr17AyJ3R78Txg0q32W9oqMObaYgH/h
-NhTj/NB4vTgXzDEGWtmzpLntnt2GnR8UawLcm1s5ukeE16pvXV8970jVr6EKZfLv
-6gxmTWnbCfdbmp0TBDGK6xUmW41LwueeNxFkzJLVxRZdSja2KbSxHUFV/pPfou8D
-+WXj/FV5DFccyw==
-=6/g8
------END PGP PUBLIC KEY BLOCK-----
-</textarea>
+-----END PGP PUBLIC KEY BLOCK-----"></textarea>
         </div>
-      </div>
-
-      <div class="persist-checkbox">
-        <input type="checkbox" id="persist-public-key">
-        <label for="persist-public-key">Save key in browser storage</label>
       </div>
     </div>
   </div>
 
   <!-- Private Key Modal -->
-  <div class="modal" id="private-key-modal">
-    <div class="modal-content">
-      <button class="close-button" id="close-private-key">&times;</button>
-      <h2>Configure Private Key</h2>
+  <div class="hidden fixed inset-0 bg-black/50 items-center justify-center" id="private-key-modal">
+    <div class="bg-white p-8 rounded-lg w-[90%] max-w-[600px] relative">
+      <button class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-2xl cursor-pointer text-gray-600 rounded-full bg-gray-100 hover:bg-gray-200 hover:text-gray-800 transition-all duration-200" id="close-private-key">&times;</button>
+      <h2 class="text-xl font-semibold mb-4">Configure Private Key</h2>
 
-      <div class="field-group">
-        <div class="field-label">
-          <span>Paste your PGP key</span>
-          <span class="info-icon" data-tooltip="Your private PGP key used for decrypting messages">ⓘ</span>
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="font-medium">Paste your PGP key</span>
+          <span class="text-gray-600 text-lg cursor-help relative group" data-tooltip="Your private PGP key used for decrypting messages">ⓘ
+            <span class="hidden group-hover:block absolute left-6 top-1/2 -translate-y-1/2 bg-gray-800 text-white px-4 py-2 rounded text-sm font-normal whitespace-nowrap z-50">Your private PGP key used for decrypting messages</span>
+          </span>
         </div>
-        <div class="textarea-container" style="height: 250px;">
-          
-
-          <textarea id="private-key" class="monospace-input" placeholder="-----BEGIN PGP PRIVATE KEY BLOCK-----
+        <div class="relative h-[250px]">
+          <textarea id="private-key" class="w-full h-full p-4 font-mono border border-gray-300 rounded" placeholder="-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 [Your private key would go here]
 -----END PGP PRIVATE KEY BLOCK-----"></textarea>
         </div>
       </div>
 
-      <div class="field-group">
-        <div class="field-label">
-          <span>Encryption passphrase</span>
-          <span class="info-icon" data-tooltip="The password that protects your private key">ⓘ</span>
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="font-medium">Encryption passphrase</span>
+          <span class="text-gray-600 text-lg cursor-help relative group" data-tooltip="The password that protects your private key">ⓘ
+            <span class="hidden group-hover:block absolute left-6 top-1/2 -translate-y-1/2 bg-gray-800 text-white px-4 py-2 rounded text-sm font-normal whitespace-nowrap z-50">The password that protects your private key</span>
+          </span>
         </div>
-        <input type="password" id="private-key-passphrase" class="monospace-input"
-          placeholder="Enter your private key passphrase"
-          style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <input type="password" id="private-key-passphrase" class="w-full p-2 font-mono border border-gray-300 rounded" placeholder="Enter your private key passphrase">
       </div>
-
     </div>
   </div>
 
   <!-- Toast for errors -->
-  <div class="toast" id="toast">
+  <div class="hidden fixed bottom-5 right-5 bg-error text-white px-6 py-3 rounded shadow-md max-w-[400px] flex items-center justify-between" id="toast">
     <span id="toast-message"></span>
-    <span class="close" id="close-toast">&times;</span>
+    <span class="ml-2.5 cursor-pointer" id="close-toast">&times;</span>
   </div>
 
   <!-- Load OpenPGP.js from CDN -->

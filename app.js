@@ -8,25 +8,24 @@ const publicKeyModal = document.getElementById('public-key-modal');
 const privateKeyModal = document.getElementById('private-key-modal');
 const toast = document.getElementById('toast');
 
-// Load keys from localStorage
-const loadSavedKeys = () => {
-    const publicKey = localStorage.getItem('publicKey');
-
-    if (publicKey) {
-        document.getElementById('public-key').value = publicKey;
-        document.getElementById('persist-public-key').checked = true;
-    }
-};
-
-// Save keys to localStorage
-const saveKeys = () => {
-    const publicKey = document.getElementById('public-key').value;
-    const shouldPersistPublic = document.getElementById('persist-public-key').checked;
-
-    if (shouldPersistPublic && publicKey) {
-        localStorage.setItem('publicKey', publicKey);
-    } else {
-        localStorage.removeItem('publicKey');
+// Initialize app based on URL parameters
+const initializeApp = async () => {
+    // Check for ?to= parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const toEmail = urlParams.get('to');
+    
+    if (toEmail) {
+        // Switch to encrypt mode
+        landing.style.display = 'none';
+        encryptWorkspace.classList.remove('hidden');
+        encryptWorkspace.classList.add('active');
+        
+        // Set the email in the input
+        const keyLookupInput = document.getElementById('key-lookup-input');
+        keyLookupInput.value = toEmail;
+        
+        // Attempt to fetch the key
+        await lookupKey(toEmail);
     }
 };
 
@@ -34,47 +33,76 @@ const saveKeys = () => {
 const showError = (message) => {
     const toastMessage = document.getElementById('toast-message');
     toastMessage.textContent = message;
-    toast.classList.add('active');
-    setTimeout(() => toast.classList.remove('active'), 5000);
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 5000);
 };
 
 const copyToClipboard = async (textareaId) => {
     const textarea = document.getElementById(textareaId);
-    await navigator.clipboard.writeText(textarea.value);
+    const button = document.querySelector(`button[id^="copy-${textareaId}"]`);
+    
+    try {
+        await navigator.clipboard.writeText(textarea.value);
+        
+        // Add transition classes first
+        button.classList.add('bg-primary', 'border-primary');
+        
+        // Use requestAnimationFrame to ensure smooth transition
+        requestAnimationFrame(() => {
+            button.textContent = 'Copied!';
+        });
+        
+        // Reset after delay
+        setTimeout(() => {
+            // First reset the text
+            button.textContent = 'Copy';
+            // Then remove the classes after a small delay to allow text to settle
+            setTimeout(() => {
+                button.classList.remove('bg-primary', 'border-primary');
+            }, 50);
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        showError('Failed to copy to clipboard');
+    }
 };
 
 // Landing page handlers
 encryptLanding.addEventListener('click', () => {
     landing.style.display = 'none';
+    encryptWorkspace.classList.remove('hidden');
     encryptWorkspace.classList.add('active');
 });
 
 decryptLanding.addEventListener('click', () => {
     landing.style.display = 'none';
+    decryptWorkspace.classList.remove('hidden');
     decryptWorkspace.classList.add('active');
 });
 
 // Modal handlers
 document.getElementById('show-public-key').addEventListener('click', () => {
-    publicKeyModal.classList.add('active');
+    publicKeyModal.classList.remove('hidden');
+    publicKeyModal.classList.add('flex');
 });
 
 document.getElementById('show-private-key').addEventListener('click', () => {
-    privateKeyModal.classList.add('active');
+    privateKeyModal.classList.remove('hidden');
+    privateKeyModal.classList.add('flex');
 });
 
 document.getElementById('close-public-key').addEventListener('click', () => {
-    publicKeyModal.classList.remove('active');
-    saveKeys();
+    publicKeyModal.classList.add('hidden');
+    publicKeyModal.classList.remove('flex');
 });
 
 document.getElementById('close-private-key').addEventListener('click', () => {
-    privateKeyModal.classList.remove('active');
-    saveKeys();
+    privateKeyModal.classList.add('hidden');
+    privateKeyModal.classList.remove('flex');
 });
 
 document.getElementById('close-toast').addEventListener('click', () => {
-    toast.classList.remove('active');
+    toast.classList.add('hidden');
 });
 
 // Encryption handler
@@ -83,7 +111,7 @@ document.getElementById('encrypt-button').addEventListener('click', async () => 
     const messageText = document.getElementById('encrypt-input').value.trim();
 
     if (!publicKeyArmored) {
-        showError('Please configure your public key first');
+        showError('Please specify the recipient or configure public key');
         return;
     }
 
@@ -93,17 +121,36 @@ document.getElementById('encrypt-button').addEventListener('click', async () => 
     }
 
     try {
+        // Read the key and force it to be treated as an encryption key
         const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
-        const message = await openpgp.createMessage({ text: messageText });
+        
+        // Create a message with specific format options
+        const message = await openpgp.createMessage({ 
+            text: messageText,
+            format: 'utf8'
+        });
+
+        // Use more specific encryption options
         const encrypted = await openpgp.encrypt({
             message,
-            encryptionKeys: publicKey
+            encryptionKeys: [publicKey],
+            config: {
+                preferredCompressionAlgorithm: openpgp.enums.compression.uncompressed,
+                aeadProtect: false,
+                allowUnauthenticatedMessages: true
+            }
         });
 
         document.getElementById('encrypt-input').value = encrypted;
     } catch (error) {
         console.error('Encryption failed:', error);
-        showError('Encryption failed. Please check your public key and try again.');
+        
+        // More detailed error message
+        const errorMessage = error.message.includes('Could not find primary user') 
+            ? 'This public key appears to be missing some metadata. Please ensure you have the complete and correct public key.'
+            : `Encryption failed: ${error.message}`;
+            
+        showError(errorMessage);
     }
 });
 
@@ -179,14 +226,50 @@ document.getElementById('decrypt-button').addEventListener('click', async () => 
     }
 });
 
+// Key lookup functionality
+const lookupKey = async (query) => {
+    try {
+        let url;
+        // Check if the query looks like a fingerprint (40 hex characters)
+        if (/^[A-Fa-f0-9]{40}$/.test(query)) {
+            url = `https://keys.openpgp.org/vks/v1/by-fingerprint/${query}`;
+        } else {
+            // Assume it's an email address
+            url = `https://keys.openpgp.org/vks/v1/by-email/${encodeURIComponent(query)}`;
+        }
 
-// Add click handlers for each copy button
-document.querySelectorAll('.copy-button').forEach(button => {
-    button.addEventListener('click', () => {
-        const textarea = button.previousElementSibling;
-        copyToClipboard(textarea.id);
-    });
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Key not found. Please check the fingerprint or email and try again.');
+        }
+
+        const key = await response.text();
+        document.getElementById('public-key').value = key;
+    } catch (error) {
+        showError(error.message);
+    }
+};
+
+document.getElementById('key-lookup-input').addEventListener('blur', async (e) => {
+    const query = e.target.value.trim();
+    
+    if (!query) {
+        showError('Please enter a fingerprint or email address');
+        return;
+    }
+
+    await lookupKey(query);
 });
 
-// Load saved keys on startup
-loadSavedKeys();
+// Update copy button handlers
+document.getElementById('copy-encrypt-input').addEventListener('click', () => {
+    copyToClipboard('encrypt-input');
+});
+
+document.getElementById('copy-decrypt-input').addEventListener('click', () => {
+    copyToClipboard('decrypt-input');
+});
+
+// Initialize the app when the DOM is loaded
+document.addEventListener('DOMContentLoaded', initializeApp);

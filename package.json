@@ -1,0 +1,18 @@
+{
+  "name": "p2p",
+  "version": "1.0.0",
+  "description": "A sleek, browser-based secure message exchange application that enables end-to-end encrypted communication between peers. This lightweight tool allows users to easily encrypt and decrypt messages using public-key cryptography, all while keeping your sensitive data secure.",
+  "main": "app.js",
+  "scripts": {
+    "build": "tailwindcss -i ./styles.css -o ./dist/styles.css",
+    "watch": "tailwindcss -i ./styles.css -o ./dist/styles.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1"
+  }
+}
